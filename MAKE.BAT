@@ -1,1 +1,1 @@
-TCC.EXE MUGLIB.C KEBAB.C
+TCC.EXE -ekebab kebab.c muglib.c sprite.c sprsh.c image.c fonts.c 

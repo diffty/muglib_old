@@ -1,5 +1,4 @@
 #include "muglib.h"
-#include "test2.h"
 
 /*
 ----------------------------------------------------------------------
@@ -164,7 +163,6 @@ int main() {
 
     key = getKey();
 
-
     // ------------------
     // ---- UPDATING ----
     // ------------------
@@ -266,8 +264,10 @@ int main() {
     // Drawing FPS
     drawInt(dBuffer, lastFrameSec, font, 0, 0);
 
+
     // Draw progression bars
     drawStr(dBuffer, "Tomato", font, kebabPosX - 50, kebabPosY);
+
     if (ingredients[0] >= 6)
       drawProgressBar(kebabPosX - 50, kebabPosY + 10, 48, 5, 100, 40);
     else if (ingredients[0] >= 5)
