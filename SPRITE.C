@@ -49,7 +49,7 @@ void drawSprite(byte far* buffer, int x, int y, sprite_t far* spr, byte masked) 
     drawSpriteSheet(buffer, x, y, spr->sprSh, spr->frame, masked);
   }
   else {
-    drawImage(buffer, x, y, spr->img, masked);
+    drawImage(buffer, x, y, spr->img, 0, masked);
   }
 
   spr->lastX = x;

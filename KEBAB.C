@@ -19,7 +19,7 @@ word far *my_clock = (word far *) 0x0000046C;    /* this points to the 18.2hz sy
 
 /*
 ----------------------------------------------------------------------
- Main
+ Misc
 ----------------------------------------------------------------------
 */
 
@@ -64,6 +64,8 @@ int main() {
 
   byte far *fBuffer = NULL;    // Frozen background buffer
 
+  struct time tt;
+
   // Assets init
   sprite_t far **spriteList;
   sprite_t far *kebabFrontSpr;
@@ -77,14 +79,16 @@ int main() {
   spritesheet_t far *onion;
   font_t far *font;
 
-  sprite_t far *test;
-
-  struct time tt;
-
   // Gameplay vars init
   int ingredients[4];
 
-  srand(*my_clock);                   /* seed the number generator. */
+  // Full kebab vars init
+  image_t far *fullKebabImg;
+  int fullKebabPosX, fullKebabPosY;
+
+
+  // Seed the number generator
+  srand(*my_clock);
 
   // Loading assets
   kebabFront = loadImage("kebabfr.bmp");
@@ -99,7 +103,8 @@ int main() {
   kebabFrontSpr = newSpriteFromImage(kebabFront);
   kebabBackSpr = newSpriteFromImage(kebabBack);
   kebabBackSpr->frozen = 1;
-  
+
+  fullKebabImg = NULL;
   
   // Initing kebab position
   kebabPosX = SCREEN_WIDTH / 2 - kebabFront->w / 2;
@@ -241,6 +246,17 @@ int main() {
 
           nbSprite++;
         }
+        else if (key == 48) {
+          if (fullKebabImg) {
+            freeImage(fullKebabImg);
+          }
+
+          drawSprite(fBuffer, kebabPosX, kebabPosY, kebabFrontSpr, 1);
+          fullKebabImg = makeImageFromBuffer(fBuffer, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+          fullKebabPosX = 0;
+          fullKebabPosY = 0;
+        }
 
         inputCooldown = 5;
       }
@@ -250,8 +266,16 @@ int main() {
     // ---- DRAWING ----
     // -----------------
 
-    // Draw frozen buffer as background
-    _fmemcpy(dBuffer, fBuffer, SCREEN_WIDTH * SCREEN_HEIGHT);
+    if (!fullKebabImg) {
+      // Draw frozen buffer as background
+      _fmemcpy(dBuffer, fBuffer, SCREEN_WIDTH * SCREEN_HEIGHT);
+    }
+    else {
+      _fmemset(dBuffer, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
+    }
+
+    // Drawing FPS
+    drawInt(dBuffer, lastFrameSec, font, 0, 0);
 
     // Drawing sprites
     for (i=0; i<nbSprite; i++) {
@@ -259,45 +283,64 @@ int main() {
         drawSprite(dBuffer, spriteList[i]->x, spriteList[i]->y, spriteList[i], 1);
     }
 
-    drawSprite(dBuffer, kebabPosX, kebabPosY, kebabFrontSpr, 1);
+    if (!fullKebabImg) {
+      drawSprite(dBuffer, kebabPosX, kebabPosY, kebabFrontSpr, 1);
 
-    // Drawing FPS
-    drawInt(dBuffer, lastFrameSec, font, 0, 0);
+      // Draw progression bars
+      drawStr(dBuffer, "Tomato", font, kebabPosX - 50, kebabPosY);
 
+      if (ingredients[0] >= 6)
+        drawProgressBar(kebabPosX - 50, kebabPosY + 10, 48, 5, 100, 40);
+      else if (ingredients[0] >= 5)
+        drawProgressBar(kebabPosX - 50, kebabPosY + 10, 48, 5, 100, 17);
+      else
+        drawProgressBar(kebabPosX - 50, kebabPosY + 10, 48, 5, ingredients[0]*100/5, 14);
 
-    // Draw progression bars
-    drawStr(dBuffer, "Tomato", font, kebabPosX - 50, kebabPosY);
+      drawStr(dBuffer, "Salad", font, kebabPosX - 50, kebabPosY + 25);
+      if (ingredients[1] >= 10)
+        drawProgressBar(kebabPosX - 50, kebabPosY + 35, 48, 5, 100, 40);
+      else if (ingredients[1] >= 8)
+        drawProgressBar(kebabPosX - 50, kebabPosY + 35, 48, 5, 100, 17);
+      else
+        drawProgressBar(kebabPosX - 50, kebabPosY + 35, 48, 5, ingredients[1]*100/10, 14);
 
-    if (ingredients[0] >= 6)
-      drawProgressBar(kebabPosX - 50, kebabPosY + 10, 48, 5, 100, 40);
-    else if (ingredients[0] >= 5)
-      drawProgressBar(kebabPosX - 50, kebabPosY + 10, 48, 5, 100, 17);
-    else
-      drawProgressBar(kebabPosX - 50, kebabPosY + 10, 48, 5, ingredients[0]*100/5, 14);
+      drawStr(dBuffer, "Onion", font, kebabPosX - 50, kebabPosY + 50);
+      if (ingredients[2] >= 10)
+        drawProgressBar(kebabPosX - 50, kebabPosY + 60, 48, 5, 100, 40);
+      else if (ingredients[2] >= 8)
+        drawProgressBar(kebabPosX - 50, kebabPosY + 60, 48, 5, 100, 17);
+      else
+        drawProgressBar(kebabPosX - 50, kebabPosY + 60, 48, 5, ingredients[2]*100/12, 14);
 
-    drawStr(dBuffer, "Salad", font, kebabPosX - 50, kebabPosY + 25);
-    if (ingredients[1] >= 10)
-      drawProgressBar(kebabPosX - 50, kebabPosY + 35, 48, 5, 100, 40);
-    else if (ingredients[1] >= 8)
-      drawProgressBar(kebabPosX - 50, kebabPosY + 35, 48, 5, 100, 17);
-    else
-      drawProgressBar(kebabPosX - 50, kebabPosY + 35, 48, 5, ingredients[1]*100/10, 14);
+      drawStr(dBuffer, "Kebab", font, kebabPosX - 50, kebabPosY + 75);
+      if (ingredients[3] >= 12)
+        drawProgressBar(kebabPosX - 50, kebabPosY + 85, 48, 5, 100, 40);
+      else if (ingredients[3] >= 10)
+        drawProgressBar(kebabPosX - 50, kebabPosY + 85, 48, 5, 100, 17);
+      else
+        drawProgressBar(kebabPosX - 50, kebabPosY + 85, 48, 5, ingredients[3]*100/15, 14);
 
-    drawStr(dBuffer, "Onion", font, kebabPosX - 50, kebabPosY + 50);
-    if (ingredients[2] >= 10)
-      drawProgressBar(kebabPosX - 50, kebabPosY + 60, 48, 5, 100, 40);
-    else if (ingredients[2] >= 8)
-      drawProgressBar(kebabPosX - 50, kebabPosY + 60, 48, 5, 100, 17);
-    else
-      drawProgressBar(kebabPosX - 50, kebabPosY + 60, 48, 5, ingredients[2]*100/12, 14);
+    }
+    else {
+      // Full kebab animation
+      drawImage(dBuffer, fullKebabPosX, fullKebabPosY, fullKebabImg, 1, 1);
 
-    drawStr(dBuffer, "Kebab", font, kebabPosX - 50, kebabPosY + 75);
-    if (ingredients[3] >= 12)
-      drawProgressBar(kebabPosX - 50, kebabPosY + 85, 48, 5, 100, 40);
-    else if (ingredients[3] >= 10)
-      drawProgressBar(kebabPosX - 50, kebabPosY + 85, 48, 5, 100, 17);
-    else
-      drawProgressBar(kebabPosX - 50, kebabPosY + 85, 48, 5, ingredients[3]*100/15, 14);
+      if (fullKebabPosY > SCREEN_HEIGHT) {
+        freeImage(fullKebabImg);
+        fullKebabImg = NULL;
+
+        // Flush ingredients count
+        for (i=0; i < 4; i++)
+          ingredients[i] = 0;
+
+        // Reset frozen buffer (& reblit back bread)
+        _fmemset(fBuffer, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
+        drawSprite(fBuffer, kebabPosX, kebabPosY, kebabBackSpr, 1);
+      }
+      else {
+        fullKebabPosY += 1;
+      }
+    }
 
     // Copying back buffer to screen
     flipBuffer(dBuffer);
@@ -324,14 +367,9 @@ int main() {
     }
 
     nbFrameSec++;
-
-
-    // printf("%d", key);
   }
-  setVideoMode(TEXT_MODE);  /* set the video mode back to text mode. */
 
-  if (nbSprite > 0)
-    writeDebug(spriteList[nbSprite-1]->sprSh);
+  setVideoMode(TEXT_MODE);  /* set the video mode back to text mode. */
 
   printf("StartTime %f, EndTime %f\n, Diff %f, NFrame %d\n", (float) beginTime, (float) *my_clock, (float) (*my_clock - beginTime), nFrame);
   printf("Avg FPS : %f\n", (nFrame / (((float) (*my_clock - beginTime)) / 18.2)));

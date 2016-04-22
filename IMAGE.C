@@ -92,7 +92,7 @@ image_t far* loadImage(char* fileName) {
 
   fclose(fp);
 
-  image->mask = (int far *) farmalloc(2 * sizeof(int));
+  image->mask = (unsigned long far *) farmalloc(2 * sizeof(unsigned long));
   
   // Building transparency info
   j = 0;
@@ -107,7 +107,7 @@ image_t far* loadImage(char* fileName) {
     if (i < (nbPixels) - 1) {
       if (image->data[i] != image->data[i+1]) {
         if (image->data[i+1] == image->data[0] || i+1 == (nbPixels) - 1 || (i > 0 && i%image->w == 0)) {
-          image->mask = farrealloc(image->mask, 2 * (image->nbZone + 1) * sizeof(int));
+          image->mask = farrealloc(image->mask, 2 * (image->nbZone + 1) * sizeof(unsigned long));
 
           image->mask[k] = i-j+1;
           image->mask[k+1] = j;
@@ -134,17 +134,21 @@ image_t far* loadImage(char* fileName) {
   return image;
 }
 
-void drawImage(byte far* buffer, int x, int y, image_t far* img, byte masked) {
+void drawImage(byte far* buffer, int x, int y, image_t far* img, byte reversed, byte masked) {
   int i, j, xb, yb;
-  int imgBufIdx, zoneSize;
+  unsigned int imgBufIdx, zoneSize;
 
   if (masked) {
-    for (i=0; i<img->nbZone; i++) {
+    for (i=0; i < img->nbZone; i++) {
       imgBufIdx = img->mask[i*2];
       zoneSize = img->mask[i*2+1];
 
       xb = imgBufIdx % img->w;
-      yb = img->h - (imgBufIdx / img->w) - 1;
+      
+      if (reversed)
+        yb = imgBufIdx / img->w;
+      else
+        yb = img->h - (imgBufIdx / img->w) - 1;
 
       // Clipping
       if (x + xb + zoneSize < 0 || x + xb >= SCREEN_WIDTH || y + yb < 0 || y + yb >= SCREEN_HEIGHT) {

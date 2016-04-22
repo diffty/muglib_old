@@ -27,6 +27,11 @@ void drawBox(int x, int y, int w, int h, int color);
 void flipBuffer();
 void clearScreen();
 
+mask_t far* makeMaskFromBuffer(byte far* buffer, int w, int h);
+image_t far* makeImageFromBuffer(byte far* buffer, int w, int h);
+
+char* intToStr(int num);
 byte getKey();
+double getTimestamp();
 
 #endif
